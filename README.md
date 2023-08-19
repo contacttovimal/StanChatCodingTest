@@ -21,3 +21,8 @@
 #  2. test case having total Expiry <  max poll capacity
 #  3. test case having total Expiry >  max poll capacity
 #  4. test case with expiry and cancellation.
+
+
+#Git Hub REF : https://github.com/contacttovimal/StanChatCodingTest.git
+
+#CodeAssignment.Docx contains requirements details.
