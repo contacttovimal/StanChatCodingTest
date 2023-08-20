@@ -7,12 +7,12 @@
 #### JDK - 11 (OpenJDK - Zulu)
 
 ### **Using following External API with**
-_#### 1. Lombok  - for POJO Builder_
-_#### 2. Log4j   - for loging_
-_#### 3. Junit   - Junit 4.11_
-_#### 4. Mockito - Other Mockito API for advance testing_
-_#### 5. Apache  - Apache Common Collection API (utility API)_
-_#### 6. TSID    - Copied Request ID Generation Algo from google  (https://stackoverflow.com/questions/15184820/how-to-generate-unique-positive-long-using-uuid )_
+_1. Lombok  - for POJO Builder_
+_2. Log4j   - for loging_
+_3. Junit   - Junit 4.11_
+_4. Mockito - Other Mockito API for advance testing_
+_5. Apache  - Apache Common Collection API (utility API)_
+_6. TSID    - Copied Request ID Generation Algo from google  (https://stackoverflow.com/questions/15184820/how-to-generate-unique-positive-long-using-uuid )_
 
 ### import pom.xml as java project and build maven.
 
