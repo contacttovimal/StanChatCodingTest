@@ -3,7 +3,6 @@ package cache;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -18,7 +17,7 @@ public final class CacheImpl<K,V> implements Cache<K,V>, Cloneable{
 
     private Logger logger;
 
-    private Map<K,V> dataMap = new HashMap<>(); //can be replaced with ConcurrentHashMap with ComputeIfAbsent()
+    private Map<K,V> dataMap = new ConcurrentHashMap<>(); //can be replaced with ConcurrentHashMap with ComputeIfAbsent()
     private volatile Function<K,V> supplier;
 
     private CacheImpl(){}
