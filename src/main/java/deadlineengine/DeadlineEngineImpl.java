@@ -3,10 +3,7 @@ package deadlineengine;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -16,18 +13,18 @@ import java.util.stream.Collectors;
 
 public class DeadlineEngineImpl implements DeadlineEngine {
 
-    private PriorityBlockingQueue<DLRequest> dataQueue = new PriorityBlockingQueue<DLRequest>(1000, (current, other) -> {
+    private PriorityBlockingQueue<DeadLineRequest> dataQueue = new PriorityBlockingQueue<DeadLineRequest>(1000, (current, other) -> {
         return Long.compare(current.getExpiryMs(), other.getExpiryMs());
     });
 
-    private Map<Long, DLRequest> requestMap = new ConcurrentHashMap<>(1000);
+    private Map<Long, DeadLineRequest> requestMap = new ConcurrentHashMap<>(1000);
     private Logger logger;
 
     private static final AtomicLong uniqueReqId = new AtomicLong(1000);
 
     public DeadlineEngineImpl() {
         logger = Configurator.initialize("DeadlineEngineImpl", "log4j2.xml").getLogger("DeadlineEngineImpl");
-        logger.info("DeadLineEngine has been Successfully Initialized. first RequestId : {}", TSID.next());
+        logger.info("DeadLineEngine has been Successfully Initialized. first RequestId : {}", Util.nextRequestId());
     }
 
     @Override
@@ -37,7 +34,7 @@ public class DeadlineEngineImpl implements DeadlineEngine {
             logger.info("Invalid Request deadlineMs:{}, currentMs:{}", deadlineMs, currentMs);
             return 0;
         }
-        DLRequest newRequest = new DLRequest(TSID.next(), deadlineMs, currentMs);
+        DeadLineRequest newRequest = new DeadLineRequest(Util.nextRequestId(), deadlineMs, currentMs);
         requestMap.put(newRequest.getRequestId(), newRequest);
         dataQueue.add(newRequest);
         return newRequest.getRequestId();
@@ -49,17 +46,17 @@ public class DeadlineEngineImpl implements DeadlineEngine {
             logger.info("Invalid Request : {}", requestId);
             return false;
         }
-        DLRequest request = requestMap.remove(requestId);
+        DeadLineRequest request = requestMap.remove(requestId);
         boolean removedFromQueue = dataQueue.remove(request);
-        logger.info("removed from requestMap : {} , ExecutedInQueue:{}", request, !removedFromQueue);
+        logger.info("removed : {} , ExecutedInQueue:{}", request, !removedFromQueue);
         return true;
     }
 
     @Override
     public int poll(long nowMs, Consumer<Long> handler, int maxPoll) {
-        Collection<DLRequest> expiredRequest = new ArrayList<>(maxPoll);
-        dataQueue.stream().limit(maxPoll).forEach(dlRequest -> {
-            if (dlRequest.getExpiryMs() < nowMs) {
+        Collection<DeadLineRequest> expiredRequest = new ArrayList<>(maxPoll);
+        dataQueue.stream().limit(maxPoll).forEach(deadLineRequest -> {
+            if (deadLineRequest.getExpiryMs() < nowMs) {
                 try {
                     expiredRequest.add(dataQueue.poll(100, TimeUnit.MILLISECONDS));
                 } catch (InterruptedException e) {
@@ -67,6 +64,7 @@ public class DeadlineEngineImpl implements DeadlineEngine {
                 }
             }
         });
+        logger.info("Expiry at:{} , expiredRequest:{}",Util.preferredDateString(nowMs),expiredRequest);
         expiredRequest.forEach(request -> {
             //logger.info("callback for expired request : {}", request);
             handler.accept(request.getRequestId());

@@ -1,24 +1,32 @@
 package cache;
 
-import deadlineengine.TSID;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public final class CacheImpl<K,V> implements Cache<K,V>{
+/**
+ * One Supplier Call per key to generate value
+ * Null Key & Null value is not allowed
+ * Supplier Function is responsible to generate value by Key - User has to provide his own supplier function as per the requirement
+ *
+ * */
+public final class CacheImpl<K,V> implements Cache<K,V>, Cloneable{
 
     private Logger logger;
 
-    private Map<K,V> dataMap = new ConcurrentHashMap<>();
+    private Map<K,V> dataMap = new HashMap<>(); //can be replaced with ConcurrentHashMap with ComputeIfAbsent()
     private volatile Function<K,V> supplier;
 
     private CacheImpl(){}
 
     public CacheImpl(Function<K,V> supplier){
+        if(supplier == null){
+            throw new RuntimeException("Supplier can not be null.");
+        }
         this.supplier = supplier;
         logger = Configurator.initialize("CacheImpl", "log4j2.xml").getLogger("CacheImpl");
         logger.info("CacheImpl has been Successfully Initialized. cacheSize: {}", dataMap.size());
@@ -26,19 +34,22 @@ public final class CacheImpl<K,V> implements Cache<K,V>{
 
     private V getOrCompute(K key){
         if(!validateKey(key)){
-            throw new RuntimeException("Invalid Key! Null not supported.");
+            throw new RuntimeException("Null key not supported.");
         }
-        if(dataMap.containsKey(key)){
-            return dataMap.get(key);
+        V value = dataMap.get(key);
+        if(value != null){
+            return value;
         }
         if(this.supplier != null){
             synchronized (supplier) {
                 if(!dataMap.containsKey(key)) {
-                    V value = supplier.apply(key);
-                    if(value!=null){
-                        dataMap.put(key, value);
-                        logger.info(" key: {} , value:{}, size:{}",key,value,dataMap.size());
+                    V newValue = supplier.apply(key);
+                    if(newValue==null){
+                        logger.info("Null value has been ignored for key: {}, size :{}",key,dataMap.size());
+                        return null;
                     };
+                    dataMap.put(key, newValue);
+                    logger.info(" key: {} , value:{}, size:{}",key,newValue,dataMap.size());
                 }
             }
             return dataMap.get(key);
@@ -56,7 +67,8 @@ public final class CacheImpl<K,V> implements Cache<K,V>{
         return getOrCompute(key);
     }
 
-
-
-
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException("Clone not supported!");
+    }
 }

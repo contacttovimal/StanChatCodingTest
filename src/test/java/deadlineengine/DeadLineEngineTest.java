@@ -1,5 +1,7 @@
 package deadlineengine;
 
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,12 +14,12 @@ import java.util.stream.IntStream;
 public class DeadLineEngineTest {
 
     DeadlineEngine deadlineEngine;
-
+    private Logger logger;
 
     @Before
     public void setup() {
         deadlineEngine = new DeadlineEngineImpl();
-
+        logger = Configurator.initialize("DeadLineEngineTest", "log4j2.xml").getLogger("DeadLineEngineTest");
     }
 
     /**
@@ -25,21 +27,21 @@ public class DeadLineEngineTest {
      */
     @Test
     public void checkDuplicateRequestId() {
-        Set<Long> requestSetLocal = ConcurrentHashMap.newKeySet();
+        Set<Long> requestKeys = ConcurrentHashMap.newKeySet();
         Random random = new Random(10000);
         IntStream.range(0, 100000).parallel().forEach(num -> {
             long deadLineMs = random.nextInt(10000);
             long requestId = deadlineEngine.schedule(deadLineMs);
             if (requestId != 0) {
-                requestSetLocal.add(requestId);
+                requestKeys.add(requestId);
             } else {
-                System.out.println("Error:" + requestId + ", deadline:" + deadLineMs);
+                logger.info("error: {}, deadLine:{}" , requestId , deadLineMs);
             }
 
         });
-        Assert.assertEquals(100000, requestSetLocal.size());
+        Assert.assertEquals(100000, requestKeys.size());
         deadlineEngine.schedule(-100);
-        Assert.assertEquals(100000, requestSetLocal.size());
+        Assert.assertEquals(100000, requestKeys.size());
     }
 
     /**
@@ -47,11 +49,11 @@ public class DeadLineEngineTest {
      */
     @Test
     public void checkExpiryWithInLimit() throws InterruptedException {
-        Set<Long> requestSet = new HashSet<>();
+        Set<Long> requestKeys = new HashSet<>();
         long expiryMs = 2000;
         for (int i = 0; i < 10; i++) {
             long requestId = deadlineEngine.schedule(expiryMs);
-            requestSet.add(requestId);
+            requestKeys.add(requestId);
             expiryMs += 2000;
         }
         ;
@@ -62,7 +64,7 @@ public class DeadLineEngineTest {
         deadlineEngine.poll(System.currentTimeMillis(), new Consumer<Long>() {
             @Override
             public void accept(Long aLong) {
-                System.out.println("expired : " + aLong);
+                logger.info("expired : {}" , aLong);
                 expiredRequestList.add(aLong);
             }
         }, 10);
@@ -78,18 +80,17 @@ public class DeadLineEngineTest {
      */
     @Test
     public void checkExpiryOutSideLimit() throws InterruptedException {
-        Set<Long> requestSet = new HashSet<>();
+        Set<Long> requestKeys = new HashSet<>();
         long expiryMs = 2000;
         for (int i = 0; i < 10; i++) {
             long requestId = deadlineEngine.schedule(expiryMs);
-            requestSet.add(requestId);
+            requestKeys.add(requestId);
             expiryMs += 2000;
         }
-        ;
 
-        Assert.assertEquals(10, requestSet.size());
+        Assert.assertEquals(10, requestKeys.size());
 
-        System.out.println("Added 10 Object with 2 second incremental expiry offset and sleep for 6 sec");
+        logger.info("Added 10 Object with 2 second incremental expiry offset and sleep for 6 sec");
 
         Thread.currentThread().sleep(6000);
 
@@ -98,7 +99,7 @@ public class DeadLineEngineTest {
         deadlineEngine.poll(System.currentTimeMillis(), new Consumer<Long>() {
             @Override
             public void accept(Long aLong) {
-                System.out.println("callback : expired : " + aLong);
+                logger.info("callback : expired : {}",  aLong);
                 expiredRequestList.add(aLong);
             }
         }, 2);
@@ -108,7 +109,7 @@ public class DeadLineEngineTest {
         deadlineEngine.poll(System.currentTimeMillis(), new Consumer<Long>() {
             @Override
             public void accept(Long aLong) {
-                System.out.println("expired : " + aLong);
+                logger.info("expired :{} " , Util.preferredDateString(aLong));
                 expiredRequestList.add(aLong);
             }
         }, 2);
@@ -121,13 +122,13 @@ public class DeadLineEngineTest {
      */
     @Test
     public void checkExpiryAndCancelEvent() throws InterruptedException {
-        Set<Long> requestSet = new HashSet<>();
+        Set<Long> requestKeys = new HashSet<>();
         long expiryMs = 2000;
         long cancelRequest=0;
         for (int i = 0; i < 10; i++) {
             long requestId = deadlineEngine.schedule(expiryMs);
             cancelRequest = requestId;
-            requestSet.add(requestId);
+            requestKeys.add(requestId);
             expiryMs += 2000;
         }
         Assert.assertEquals(true,deadlineEngine.cancel(cancelRequest));
@@ -139,16 +140,14 @@ public class DeadLineEngineTest {
         deadlineEngine.poll(System.currentTimeMillis(), new Consumer<Long>() {
             @Override
             public void accept(Long aLong) {
-                System.out.println("expired : " + aLong);
+                logger.info("expired : {}" ,Util.preferredDateString(aLong));
                 expiredRequestList.add(aLong);
             }
         }, 10);
 
         Assert.assertEquals(2, expiredRequestList.size());
         Assert.assertEquals(7, deadlineEngine.size());
-
     }
-
 
 }
 
