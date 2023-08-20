@@ -1,9 +1,9 @@
 ### **StanChatCodingTest**
 
-#### CacheImpl.java is basic implementation for Cache Interface provided in requirements
-#### DeadLineEngineImpl.java is basic implementation of the provided requirements
+#### _CacheImpl.java is basic implementation for Cache Interface provided in requirements_
+#### _DeadLineEngineImpl.java is basic implementation of the provided requirements_
 
-### Project setup : Intellij Java Project
+### **Project setup : Intellij Java Project**
 #### JDK - 11 (OpenJDK - Zulu)
 
 ### Using following External API with
