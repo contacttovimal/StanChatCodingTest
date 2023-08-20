@@ -55,7 +55,7 @@ public class CacheImplTest {
         });
         Mockito.verify(cacheImpl,Mockito.times(201)).get(Mockito.any());
         Mockito.verify(supplier,Mockito.times(101)).apply(Mockito.any());
-        logger.info("verify method call -  get:{}times ,supplier:{}tines",201,101);
+        logger.info("verify method call -  get:{}times ,supplier:{} times",201,101);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class CacheImplTest {
 
             Mockito.verify(cacheImpl, Mockito.times(300)).get(Mockito.any());
             Mockito.verify(supplier, Mockito.times(200)).apply(Mockito.any());
-            logger.info("verify method call : get:{}times , supplier:{}times", 300, 200);
+            logger.info("verify method call : get:{}times , supplier:{} times", 300, 200);
 
 
         }catch(InterruptedException ie){
@@ -114,7 +114,7 @@ public class CacheImplTest {
         Mockito.verify(cacheImpl,Mockito.times(11)).get(Mockito.any());
         Mockito.verify(supplier,Mockito.times(11)).apply(Mockito.any());
         Assert.assertEquals(null,cacheImpl.get(null));
-        logger.info("verify method call : get:{}times , supplier:{}times",11,11);
+        logger.info("verify method call : get:{}times , supplier:{} times",11,11);
     }
     @Test
     public void checkNullValue(){
@@ -128,6 +128,6 @@ public class CacheImplTest {
         Assert.assertEquals(null,cacheImpl.get("InvalidKey"));
         Mockito.verify(cacheImpl,Mockito.times(12)).get(Mockito.any());
         Mockito.verify(supplier,Mockito.times(12)).apply(Mockito.any());
-        logger.info("verify method call : get:{}times , supplier:{}times",12,12);
+        logger.info("verify method call : get:{}times , supplier:{} times",12,12);
     }
 }
